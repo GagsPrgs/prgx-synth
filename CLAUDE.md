@@ -34,8 +34,9 @@ Git commit radi tek nakon te potvrde.
 
 1. **Prazan instrument** s jednim gumbom za glasnoću koji se učita u FL Studio. (gotovo)
 2. **Oscilator i MIDI**: pilasti val (PolyBLEP, bez aliasinga), 8 glasova preko `juce::Synthesiser`,
-   note iz FL Studija. Ima kratku fiksnu ovojnicu (3 ms / 20 ms) samo protiv klikova. (gotovo)
-3. **Ovojnica (ADSR)**: attack, decay, sustain, release; ta fiksna ovojnica postaje podesiva gumbima. ← sljedeća
+   note iz FL Studija. (gotovo)
+3. **Ovojnica (ADSR)**: gumbi Attack, Decay, Sustain, Release (`juce::ADSR` u svakom glasu) i novo, šire
+   sučelje s karticama. ← trenutna
 4. **Filtar**: niskopropusni filtar s cutoff i resonance gumbima.
 5. **Modulacija**: LFO i odabir valnog oblika oscilatora.
 6. **Preseti i dorada sučelja**: spremanje/učitavanje preseta, ljepši izgled.
@@ -58,4 +59,16 @@ Detalji i kopiranje u FL Studio: `README.md`.
 - `Source/PluginProcessor.*`: parametri, MIDI i zbrajanje glasova (audio nit)
 - `Source/SynthVoice.*`: jedan glas, oscilator i ovojnica (audio nit)
 - `Source/SynthSound.h`: oznaka "zvuka" koji synth svira
+- `Source/ParameterIds.h`: imena svih parametara (jedino mjesto gdje se pišu kao tekst)
 - `Source/PluginEditor.*`: sučelje (glavna nit)
+- `Source/LabeledKnob.*`: gumb s natpisom, spojen na jedan parametar
+- `Source/Theme.h`: boje sučelja
+
+## Pravila za parametre
+
+- Novi parametar: dodaj ID u `ParameterIds.h`, napravi ga u `createParameterLayout()` i spoji ga s gumbom
+  preko `LabeledKnob`. Nikad ne piši ID kao tekst na drugom mjestu (tipfeler = nullptr = rušenje).
+- ID postojećeg parametra se ne mijenja nakon što postoje spremljeni projekti (FL po njemu pamti postavke).
+- Glasovi čitaju parametre kroz `std::atomic<float>*` (vidi `SynthVoice`). Ovojnica se u glasu ažurira
+  samo kad se vrijednost promijeni: `juce::ADSR::setParameters` preračuna brzine, pa bi usred otpuštanja
+  promijenio njegov nagib.

@@ -2,8 +2,8 @@
 
 VST3 synth plugin za Windows (FL Studio), napravljen u JUCE-u i CMake-u.
 
-**Trenutno stanje (etapa 2):** instrument koji svira note pilastim valom, do 8 nota istovremeno
-(akordi), s jednim gumbom za glasnoću (Volume).
+**Trenutno stanje (etapa 3):** instrument koji svira note pilastim valom, do 8 nota istovremeno
+(akordi), s ovojnicom (gumbi Attack, Decay, Sustain, Release) i gumbom za glasnoću (Volume).
 
 ## 1. Što treba instalirati (samo prvi put)
 
@@ -71,20 +71,34 @@ Copy-Item -Recurse -Force "build\PrgxSynth_artefacts\Release\VST3\PRGX Synth.vst
    da se pojavi u izborniku.
 4. Zatvori prozor, u **Channel rack** klikni **+** i odaberi **PRGX Synth**.
 
-Trebao bi se otvoriti prozor s naslovom "PRGX Synth" i gumbom **Volume**.
+Trebao bi se otvoriti prozor s naslovom "PRGX Synth", karticom **ENVELOPE** (Attack, Decay, Sustain,
+Release) i karticom **OUTPUT** (Volume). Dvoklik na gumb vraća ga na početnu vrijednost, a klik na broj
+ispod gumba omogućuje upis vrijednosti (npr. `250 ms` ili `1.5 s`).
 
 5. Sviraj note: otvori **Piano roll** (desni klik na kanal → *Piano roll*), ucrtaj note i pritisni
    Play, ili klikni klavijaturu na lijevoj strani Piano rolla. (MIDI klavijatura radi ako je spojena
    i uključena u FL Studiju.) Čut ćeš pilasti val, a gumb Volume mijenja glasnoću.
+
+   Što rade gumbi ovojnice (kako se glasnoća note mijenja u vremenu):
+
+   | Gumb | Što radi |
+   |---|---|
+   | Attack | koliko dugo nota raste od tišine do pune glasnoće (dugo = "meki" početak) |
+   | Decay | koliko dugo nakon toga pada na razinu držanja |
+   | Sustain | razina na kojoj nota ostaje dok držiš tipku |
+   | Release | koliko dugo nota utihne nakon što pustiš tipku |
 
 ## Struktura projekta
 
 ```
 CMakeLists.txt            postavke projekta i plugina, preuzimanje JUCE-a
 Source/PluginProcessor.*  parametri, primanje MIDI nota, zbrajanje glasova
-Source/SynthVoice.*       jedan glas: oscilator (pilasti val) i kratka ovojnica
+Source/SynthVoice.*       jedan glas: oscilator (pilasti val) i ovojnica (ADSR)
 Source/SynthSound.h       oznaka "zvuka" koji synth svira
-Source/PluginEditor.*     prozor plugina (gumb za glasnoću)
+Source/ParameterIds.h     imena svih parametara na jednom mjestu
+Source/PluginEditor.*     prozor plugina (kartice s gumbima)
+Source/LabeledKnob.*      gumb s natpisom i vrijednošću, spojen na parametar
+Source/Theme.h            boje sučelja
 CLAUDE.md                 pravila projekta i popis etapa
 .gitignore                što Git ne prati (mapa build/)
 ```

@@ -37,6 +37,7 @@ target_sources(PrgxSynth
     PRIVATE
         Source/PluginProcessor.cpp
         Source/PluginEditor.cpp
+        Source/LabeledKnob.cpp
         Source/SynthVoice.cpp)
 
 target_compile_definitions(PrgxSynth

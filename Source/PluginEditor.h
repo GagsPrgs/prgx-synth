@@ -1,5 +1,6 @@
 #pragma once
 
+#include "LabeledKnob.h"
 #include "PluginProcessor.h"
 
 // Prozor plugina koji vidiš u FL Studiju.
@@ -13,11 +14,10 @@ public:
     void resized() override;
 
 private:
-    juce::Slider volumeKnob;
-    juce::Label volumeLabel;
+    LabeledKnob attackKnob, decayKnob, sustainKnob, releaseKnob, volumeKnob;
 
-    // Povezuje gumb s parametrom "gain" u oba smjera (gumb <-> FL Studio automatizacija).
-    juce::AudioProcessorValueTreeState::SliderAttachment volumeAttachment;
+    // Pravokutnici naslova i dviju kartica. Računaju se u resized(), a crtaju u paint().
+    juce::Rectangle<int> titleArea, envelopePanel, outputPanel;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PrgxAudioProcessorEditor)
 };

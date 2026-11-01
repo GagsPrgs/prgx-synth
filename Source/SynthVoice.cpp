@@ -1,13 +1,9 @@
 #include "SynthVoice.h"
+#include "ParameterIds.h"
 #include "SynthSound.h"
 
 namespace
 {
-    // Kratka fiksna ovojnica samo da nota ne "pukne" na početku i na kraju (u sekundama).
-    // U etapi 3 ovo postaje pravi ADSR s gumbima.
-    constexpr float attackSeconds = 0.003f;
-    constexpr float releaseSeconds = 0.02f;
-
     // Običan pilasti val ima oštar skok na kraju svakog titraja, a on na višim notama
     // stvara neželjene visoke tonove (aliasing). PolyBLEP ublaži skok baš oko tog mjesta.
     // t je faza (od 0 do 1), a dt pomak faze po uzorku.
@@ -29,6 +25,14 @@ namespace
     }
 }
 
+SynthVoice::SynthVoice (juce::AudioProcessorValueTreeState& state)
+    : attackParameter (state.getRawParameterValue (ParameterIds::attack)),
+      decayParameter (state.getRawParameterValue (ParameterIds::decay)),
+      sustainParameter (state.getRawParameterValue (ParameterIds::sustain)),
+      releaseParameter (state.getRawParameterValue (ParameterIds::release))
+{
+}
+
 bool SynthVoice::canPlaySound (juce::SynthesiserSound* sound)
 {
     return dynamic_cast<SynthSound*> (sound) != nullptr;
@@ -40,6 +44,7 @@ void SynthVoice::startNote (int midiNoteNumber, float velocity, juce::Synthesise
     phaseIncrement = juce::MidiMessage::getMidiNoteInHertz (midiNoteNumber) / getSampleRate();
     level = velocity;
 
+    updateEnvelope();
     envelope.noteOn();
 }
 
@@ -47,7 +52,8 @@ void SynthVoice::stopNote (float, bool allowTailOff)
 {
     if (allowTailOff)
     {
-        // Nota se kratko utišava, a glas se oslobodi u renderNextBlock kad ovojnica završi.
+        // Nota se utišava, a glas se oslobodi u renderNextBlock kad ovojnica završi.
+        updateEnvelope();
         envelope.noteOff();
     }
     else
@@ -66,7 +72,9 @@ void SynthVoice::setCurrentPlaybackSampleRate (double newRate)
     if (newRate > 0.0)
     {
         envelope.setSampleRate (newRate);
-        envelope.setParameters ({ attackSeconds, 0.0f, 1.0f, releaseSeconds });
+
+        // Nova brzina uzorkovanja traži preračun, pa ovdje ne uspoređujemo s prijašnjim vrijednostima.
+        envelope.setParameters (readEnvelopeParameters());
     }
 }
 
@@ -75,6 +83,8 @@ void SynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, int st
     // Synthesiser pozove sve glasove, pa oni koji ne sviraju moraju odmah odustati.
     if (! isVoiceActive())
         return;
+
+    updateEnvelope();
 
     const float gain = level * voiceGain;
 
@@ -98,5 +108,26 @@ void SynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, int st
             clearCurrentNote();
             break;
         }
+    }
+}
+
+juce::ADSR::Parameters SynthVoice::readEnvelopeParameters() const
+{
+    return { attackParameter->load(), decayParameter->load(), sustainParameter->load(), releaseParameter->load() };
+}
+
+void SynthVoice::updateEnvelope()
+{
+    const auto wanted = readEnvelopeParameters();
+    const auto& current = envelope.getParameters();
+
+    // setParameters preračuna brzine ovojnice, pa bi usred otpuštanja promijenio njegov nagib.
+    // Zato ga zovemo samo kad se neki gumb stvarno pomaknuo.
+    if (! (juce::exactlyEqual (wanted.attack, current.attack)
+           && juce::exactlyEqual (wanted.decay, current.decay)
+           && juce::exactlyEqual (wanted.sustain, current.sustain)
+           && juce::exactlyEqual (wanted.release, current.release)))
+    {
+        envelope.setParameters (wanted);
     }
 }

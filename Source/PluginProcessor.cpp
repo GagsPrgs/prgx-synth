@@ -1,4 +1,5 @@
 #include "PluginProcessor.h"
+#include "ParameterIds.h"
 #include "PluginEditor.h"
 #include "SynthSound.h"
 #include "SynthVoice.h"
@@ -8,22 +9,77 @@ PrgxAudioProcessor::PrgxAudioProcessor()
       parameters (*this, nullptr, "PARAMETERS", createParameterLayout())
 {
     // Pokazivač na vrijednost parametra uzimamo jednom, ovdje, a ne na audio niti.
-    gainParameter = parameters.getRawParameterValue ("gain");
+    gainParameter = parameters.getRawParameterValue (ParameterIds::gain);
 
     // Glasove i zvuk dodajemo ovdje, prije nego što audio nit krene (ne smiju se dodavati kasnije).
     for (int i = 0; i < numVoices; ++i)
-        synth.addVoice (new SynthVoice());
+        synth.addVoice (new SynthVoice (parameters));
 
     synth.addSound (new SynthSound());
+}
+
+namespace
+{
+    // Postotak se prikazuje kao "70 %".
+    juce::String percentToText (float value, int)
+    {
+        return juce::String (juce::roundToInt (value * 100.0f)) + " %";
+    }
+
+    float textToPercent (const juce::String& text)
+    {
+        return text.getFloatValue() / 100.0f;
+    }
+
+    // Vrijeme se prikazuje kao "12 ms" ispod sekunde, a inače kao "1.50 s".
+    juce::String secondsToText (float seconds, int)
+    {
+        if (seconds < 1.0f)
+            return juce::String (juce::roundToInt (seconds * 1000.0f)) + " ms";
+
+        return juce::String (seconds, 2) + " s";
+    }
+
+    // Upisani tekst bez oznake "ms" shvaća se kao sekunde.
+    float textToSeconds (const juce::String& text)
+    {
+        const float number = text.getFloatValue();
+        return text.containsIgnoreCase ("ms") ? number / 1000.0f : number;
+    }
+
+    std::unique_ptr<juce::AudioParameterFloat> makePercentParameter (const char* id, const juce::String& name, float defaultValue)
+    {
+        return std::make_unique<juce::AudioParameterFloat> (
+            juce::ParameterID { id, 1 }, name,
+            juce::NormalisableRange<float> (0.0f, 1.0f), defaultValue,
+            juce::AudioParameterFloatAttributes().withStringFromValueFunction (percentToText)
+                                                 .withValueFromStringFunction (textToPercent));
+    }
+
+    // Vremena idu od 1 ms do maxSeconds. Gumb je "nagnut" tako da mu je sredina baš centreSeconds,
+    // pa ima dovoljno preciznosti i za kratka i za duga vremena.
+    std::unique_ptr<juce::AudioParameterFloat> makeTimeParameter (const char* id, const juce::String& name,
+                                                                  float maxSeconds, float centreSeconds, float defaultSeconds)
+    {
+        juce::NormalisableRange<float> range (0.001f, maxSeconds);
+        range.setSkewForCentre (centreSeconds);
+
+        return std::make_unique<juce::AudioParameterFloat> (
+            juce::ParameterID { id, 1 }, name, range, defaultSeconds,
+            juce::AudioParameterFloatAttributes().withStringFromValueFunction (secondsToText)
+                                                 .withValueFromStringFunction (textToSeconds));
+    }
 }
 
 juce::AudioProcessorValueTreeState::ParameterLayout PrgxAudioProcessor::createParameterLayout()
 {
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
 
-    layout.add (std::make_unique<juce::AudioParameterFloat> (
-        juce::ParameterID { "gain", 1 }, "Volume",
-        juce::NormalisableRange<float> (0.0f, 1.0f), 0.8f));
+    layout.add (makeTimeParameter (ParameterIds::attack, "Attack", 5.0f, 0.15f, 0.01f));
+    layout.add (makeTimeParameter (ParameterIds::decay, "Decay", 5.0f, 0.3f, 0.3f));
+    layout.add (makePercentParameter (ParameterIds::sustain, "Sustain", 0.7f));
+    layout.add (makeTimeParameter (ParameterIds::release, "Release", 10.0f, 0.5f, 0.25f));
+    layout.add (makePercentParameter (ParameterIds::gain, "Volume", 0.8f));
 
     return layout;
 }

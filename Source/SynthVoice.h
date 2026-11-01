@@ -7,7 +7,8 @@
 class SynthVoice : public juce::SynthesiserVoice
 {
 public:
-    SynthVoice() = default;
+    // Glas čita ovojnicu (attack, decay, sustain, release) izravno iz parametara plugina.
+    explicit SynthVoice (juce::AudioProcessorValueTreeState& state);
 
     bool canPlaySound (juce::SynthesiserSound*) override;
 
@@ -24,12 +25,21 @@ public:
     using SynthesiserVoice::renderNextBlock;
 
 private:
+    juce::ADSR::Parameters readEnvelopeParameters() const;
+    void updateEnvelope();
+
     // Glasnoća jednog glasa. Mala je da se nekoliko nota može zbrojiti bez pucanja.
     static constexpr float voiceGain = 0.3f;
 
     double phase = 0.0;           // gdje smo u jednom titraju vala (od 0 do 1)
     double phaseIncrement = 0.0;  // za koliko se faza pomakne po uzorku (ovisi o visini note)
     float level = 0.0f;           // jačina note (koliko jako je tipka pritisnuta)
+
+    // Pokazivači na gumbe ovojnice. Uzimamo ih jednom, u konstruktoru, a ne na audio niti.
+    std::atomic<float>* attackParameter;
+    std::atomic<float>* decayParameter;
+    std::atomic<float>* sustainParameter;
+    std::atomic<float>* releaseParameter;
 
     juce::ADSR envelope;
 
