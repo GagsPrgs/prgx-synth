@@ -37,8 +37,12 @@ target_sources(PrgxSynth
     PRIVATE
         Source/PluginProcessor.cpp
         Source/PluginEditor.cpp
+        Source/EnvelopeDisplay.cpp
+        Source/FilterDisplay.cpp
+        Source/LabeledChoice.cpp
         Source/LabeledKnob.cpp
-        Source/SynthVoice.cpp)
+        Source/SynthVoice.cpp
+        Source/WaveformDisplay.cpp)
 
 target_compile_definitions(PrgxSynth
     PUBLIC

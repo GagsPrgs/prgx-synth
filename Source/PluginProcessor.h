@@ -42,7 +42,7 @@ public:
 private:
     static juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
 
-    static constexpr int numVoices = 8;  // koliko nota može zvučati istovremeno
+    static constexpr int numVoices = 16;  // koliko nota može zvučati istovremeno
 
     juce::Synthesiser synth;
 

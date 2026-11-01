@@ -2,8 +2,9 @@
 
 VST3 synth plugin za Windows (FL Studio), napravljen u JUCE-u i CMake-u.
 
-**Trenutno stanje (etapa 3):** instrument koji svira note pilastim valom, do 8 nota istovremeno
-(akordi), s ovojnicom (gumbi Attack, Decay, Sustain, Release) i gumbom za glasnoću (Volume).
+**Trenutno stanje (etapa 4):** instrument s 4 valna oblika (sinus, pila, kvadrat, trokut), niskopropusnim
+filtrom (Cutoff, Resonance), ovojnicom (Attack, Decay, Sustain, Release), glavnom glasnoćom (Volume),
+kotačićem za visinu tona (pitch bend) i pedalom za sustain. Svira do 16 nota istovremeno (akordi).
 
 ## 1. Što treba instalirati (samo prvi put)
 
@@ -71,33 +72,47 @@ Copy-Item -Recurse -Force "build\PrgxSynth_artefacts\Release\VST3\PRGX Synth.vst
    da se pojavi u izborniku.
 4. Zatvori prozor, u **Channel rack** klikni **+** i odaberi **PRGX Synth**.
 
-Trebao bi se otvoriti prozor s naslovom "PRGX Synth", karticom **ENVELOPE** (Attack, Decay, Sustain,
-Release) i karticom **OUTPUT** (Volume). Dvoklik na gumb vraća ga na početnu vrijednost, a klik na broj
-ispod gumba omogućuje upis vrijednosti (npr. `250 ms` ili `1.5 s`).
+Trebao bi se otvoriti prozor s naslovom "PRGX Synth" i četiri kartice, redoslijedom kojim zvuk putuje:
+**OSCILLATOR** → **FILTER** → **ENVELOPE** → **OUTPUT**. Crteži u karticama (oblik vala, odziv filtra,
+oblik ovojnice) mijenjaju se dok vrtiš gumbe. Dvoklik na gumb vraća ga na početnu vrijednost, a klik na
+broj ispod gumba omogućuje upis vrijednosti (npr. `250 ms`, `1.5 s`, `800` ili `1.5k` za Cutoff).
 
 5. Sviraj note: otvori **Piano roll** (desni klik na kanal → *Piano roll*), ucrtaj note i pritisni
    Play, ili klikni klavijaturu na lijevoj strani Piano rolla. (MIDI klavijatura radi ako je spojena
-   i uključena u FL Studiju.) Čut ćeš pilasti val, a gumb Volume mijenja glasnoću.
+   i uključena u FL Studiju.) Početni zvuk je pilasti val.
 
-   Što rade gumbi ovojnice (kako se glasnoća note mijenja u vremenu):
+   Što rade kontrole:
 
-   | Gumb | Što radi |
+   | Kontrola | Što radi |
    |---|---|
+   | Waveform | oblik vala: Sine (mekan, bez viših tonova), Saw (svijetao, pun), Square (šuplji, "drveni"), Triangle (blag) |
+   | Bend Range | za koliko poluglasova kotačić za visinu tona (pitch bend) pomiče notu. Postavi isto kao raspon kanala u FL Studiju (zadano 2) |
+   | Cutoff | od koje frekvencije filtar utišava više tonove. Skroz desno je filtar otvoren (zvuk se ne mijenja) |
+   | Resonance | koliko filtar naglasi tonove baš oko Cutoffa. Visoko daje "zvonki", šiljasti zvuk |
    | Attack | koliko dugo nota raste od tišine do pune glasnoće (dugo = "meki" početak) |
    | Decay | koliko dugo nakon toga pada na razinu držanja |
    | Sustain | razina na kojoj nota ostaje dok držiš tipku |
    | Release | koliko dugo nota utihne nakon što pustiš tipku |
+   | Volume | glavna glasnoća plugina |
+
+   Za isprobavanje: Attack oko 1 s daje "pad" zvuk koji nježno raste. Sustain 0 % uz Decay oko 300 ms daje
+   kratki "pluck". Cutoff povučen dolje uz malo Resonancea daje klasični "wah" zvuk kad ga vrtiš dok nota svira.
 
 ## Struktura projekta
 
 ```
 CMakeLists.txt            postavke projekta i plugina, preuzimanje JUCE-a
 Source/PluginProcessor.*  parametri, primanje MIDI nota, zbrajanje glasova
-Source/SynthVoice.*       jedan glas: oscilator (pilasti val) i ovojnica (ADSR)
+Source/SynthVoice.*       jedan glas: oscilator, filtar i ovojnica (ADSR), pitch bend
+Source/Filter.h           niskopropusni filtar (matematika filtra)
 Source/SynthSound.h       oznaka "zvuka" koji synth svira
 Source/ParameterIds.h     imena svih parametara na jednom mjestu
-Source/PluginEditor.*     prozor plugina (kartice s gumbima)
+Source/PluginEditor.*     prozor plugina (kartice)
 Source/LabeledKnob.*      gumb s natpisom i vrijednošću, spojen na parametar
+Source/LabeledChoice.*    padajući izbornik s natpisom, spojen na parametar
+Source/WaveformDisplay.*  crtež odabranog valnog oblika
+Source/FilterDisplay.*    crtež odziva filtra
+Source/EnvelopeDisplay.*  crtež oblika ovojnice
 Source/Theme.h            boje sučelja
 CLAUDE.md                 pravila projekta i popis etapa
 .gitignore                što Git ne prati (mapa build/)

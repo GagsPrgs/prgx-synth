@@ -36,9 +36,10 @@ Git commit radi tek nakon te potvrde.
 2. **Oscilator i MIDI**: pilasti val (PolyBLEP, bez aliasinga), 8 glasova preko `juce::Synthesiser`,
    note iz FL Studija. (gotovo)
 3. **Ovojnica (ADSR)**: gumbi Attack, Decay, Sustain, Release (`juce::ADSR` u svakom glasu) i novo, šire
-   sučelje s karticama. ← trenutna
-4. **Filtar**: niskopropusni filtar s cutoff i resonance gumbima.
-5. **Modulacija**: LFO i odabir valnog oblika oscilatora.
+   sučelje s karticama. (gotovo)
+4. **Osnove**: 4 valna oblika, niskopropusni filtar (Cutoff, Resonance), pitch bend s odabirom raspona,
+   16 glasova, crteži valnog oblika, odziva filtra i ovojnice. ← trenutna
+5. **Modulacija**: LFO (vibrato, tremolo, pomicanje cutoffa), ovojnica filtra.
 6. **Preseti i dorada sučelja**: spremanje/učitavanje preseta, ljepši izgled.
 
 (Etape 2–6 su prijedlog i mogu se mijenjati.)
@@ -57,11 +58,13 @@ Detalji i kopiranje u FL Studio: `README.md`.
 
 - `CMakeLists.txt`: postavke projekta i plugina
 - `Source/PluginProcessor.*`: parametri, MIDI i zbrajanje glasova (audio nit)
-- `Source/SynthVoice.*`: jedan glas, oscilator i ovojnica (audio nit)
+- `Source/SynthVoice.*`: jedan glas: oscilator, filtar, ovojnica, pitch bend (audio nit)
+- `Source/Filter.h`: niskopropusni filtar (audio nit); isti račun odziva koristi i `FilterDisplay`
 - `Source/SynthSound.h`: oznaka "zvuka" koji synth svira
 - `Source/ParameterIds.h`: imena svih parametara (jedino mjesto gdje se pišu kao tekst)
 - `Source/PluginEditor.*`: sučelje (glavna nit)
-- `Source/LabeledKnob.*`: gumb s natpisom, spojen na jedan parametar
+- `Source/LabeledKnob.*`, `Source/LabeledChoice.*`: gumb i padajući izbornik s natpisom, spojeni na parametar
+- `Source/WaveformDisplay.*`, `Source/FilterDisplay.*`, `Source/EnvelopeDisplay.*`: crteži u karticama
 - `Source/Theme.h`: boje sučelja
 
 ## Pravila za parametre
@@ -72,3 +75,18 @@ Detalji i kopiranje u FL Studio: `README.md`.
 - Glasovi čitaju parametre kroz `std::atomic<float>*` (vidi `SynthVoice`). Ovojnica se u glasu ažurira
   samo kad se vrijednost promijeni: `juce::ADSR::setParameters` preračuna brzine, pa bi usred otpuštanja
   promijenio njegov nagib.
+- Parametri s izborom (valni oblik, raspon pitch benda) spremaju se kao **indeks**. Redoslijed izbora mora
+  biti isti u `PluginProcessor.cpp` i `SynthVoice.cpp`, a novi izbor se dodaje samo na **kraj** popisa
+  (inače se spremljeni projekti pokvare).
+- Gumbi koji mijenjaju zvuk glatko prelaze na novu vrijednost (`juce::SmoothedValue`: cutoff, pitch bend,
+  uključivanje filtra), da pomicanje gumba ne pravi klikove.
+- Kad je filtar posve otvoren (cutoff na vrhu, bez rezonancije), zvuk ide mimo filtra (`LowPassFilter::isOpen`),
+  pa zadani zvuk ostaje bit-po-bit isti kao bez filtra.
+
+## Pravila za sučelje
+
+- Crteži i gumbi se na promjenu parametra ažuriraju preko `juce::ParameterAttachment` ili
+  `...Attachment` klasa, koje rade na glavnoj niti. Sučelje nikad ne čita parametre izravno s audio niti
+  niti ne stavlja `Listener`e koji bi se zvali s nje.
+- Boje i zajednička pozadina crteža nalaze se u `Theme.h`; ne piši boje na više mjesta.
+- Veličine i razmaci su konstante na vrhu `PluginEditor.cpp`; raspored se računa iz njih.

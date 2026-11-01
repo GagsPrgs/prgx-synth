@@ -11,4 +11,11 @@ namespace Theme
     inline const juce::Colour accent { 0xff4fc3f7 };
     inline const juce::Colour text { 0xffe8e8ee };
     inline const juce::Colour dimText { 0xff9a9aa8 };
+
+    // Tamna "udubina" u kojoj se crtaju krivulje (valni oblik, filtar, ovojnica).
+    inline void fillDisplay (juce::Graphics& g, juce::Rectangle<float> bounds)
+    {
+        g.setColour (background);
+        g.fillRoundedRectangle (bounds, 6.0f);
+    }
 }
