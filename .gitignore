@@ -1,0 +1,8 @@
+# Sve što CMake i prevoditelj generiraju (uključujući preuzeti JUCE)
+build/
+out/
+
+# Datoteke editora
+.vs/
+.vscode/
+*.user
