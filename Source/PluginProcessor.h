@@ -42,6 +42,10 @@ public:
 private:
     static juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
 
+    static constexpr int numVoices = 8;  // koliko nota može zvučati istovremeno
+
+    juce::Synthesiser synth;
+
     std::atomic<float>* gainParameter = nullptr;
     float previousGain = 0.0f;
 

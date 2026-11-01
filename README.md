@@ -2,8 +2,8 @@
 
 VST3 synth plugin za Windows (FL Studio), napravljen u JUCE-u i CMake-u.
 
-**Trenutno stanje (etapa 1):** prazan instrument s jednim gumbom za glasnoću.
-Još ne proizvodi zvuk; to dolazi u etapi 2.
+**Trenutno stanje (etapa 2):** instrument koji svira note pilastim valom, do 8 nota istovremeno
+(akordi), s jednim gumbom za glasnoću (Volume).
 
 ## 1. Što treba instalirati (samo prvi put)
 
@@ -73,11 +73,17 @@ Copy-Item -Recurse -Force "build\PrgxSynth_artefacts\Release\VST3\PRGX Synth.vst
 
 Trebao bi se otvoriti prozor s naslovom "PRGX Synth" i gumbom **Volume**.
 
+5. Sviraj note: otvori **Piano roll** (desni klik na kanal → *Piano roll*), ucrtaj note i pritisni
+   Play, ili klikni klavijaturu na lijevoj strani Piano rolla. (MIDI klavijatura radi ako je spojena
+   i uključena u FL Studiju.) Čut ćeš pilasti val, a gumb Volume mijenja glasnoću.
+
 ## Struktura projekta
 
 ```
 CMakeLists.txt            postavke projekta i plugina, preuzimanje JUCE-a
-Source/PluginProcessor.*  obrada zvuka i parametri
+Source/PluginProcessor.*  parametri, primanje MIDI nota, zbrajanje glasova
+Source/SynthVoice.*       jedan glas: oscilator (pilasti val) i kratka ovojnica
+Source/SynthSound.h       oznaka "zvuka" koji synth svira
 Source/PluginEditor.*     prozor plugina (gumb za glasnoću)
 CLAUDE.md                 pravila projekta i popis etapa
 .gitignore                što Git ne prati (mapa build/)

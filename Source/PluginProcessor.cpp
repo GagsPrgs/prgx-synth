@@ -1,5 +1,7 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
+#include "SynthSound.h"
+#include "SynthVoice.h"
 
 PrgxAudioProcessor::PrgxAudioProcessor()
     : AudioProcessor (BusesProperties().withOutput ("Output", juce::AudioChannelSet::stereo(), true)),
@@ -7,6 +9,12 @@ PrgxAudioProcessor::PrgxAudioProcessor()
 {
     // Pokazivač na vrijednost parametra uzimamo jednom, ovdje, a ne na audio niti.
     gainParameter = parameters.getRawParameterValue ("gain");
+
+    // Glasove i zvuk dodajemo ovdje, prije nego što audio nit krene (ne smiju se dodavati kasnije).
+    for (int i = 0; i < numVoices; ++i)
+        synth.addVoice (new SynthVoice());
+
+    synth.addSound (new SynthSound());
 }
 
 juce::AudioProcessorValueTreeState::ParameterLayout PrgxAudioProcessor::createParameterLayout()
@@ -20,8 +28,9 @@ juce::AudioProcessorValueTreeState::ParameterLayout PrgxAudioProcessor::createPa
     return layout;
 }
 
-void PrgxAudioProcessor::prepareToPlay (double, int)
+void PrgxAudioProcessor::prepareToPlay (double sampleRate, int)
 {
+    synth.setCurrentPlaybackSampleRate (sampleRate);
     previousGain = gainParameter->load();
 }
 
@@ -35,12 +44,14 @@ bool PrgxAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) con
     return out == juce::AudioChannelSet::mono() || out == juce::AudioChannelSet::stereo();
 }
 
-void PrgxAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer&)
+void PrgxAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     juce::ScopedNoDenormals noDenormals;
 
-    // Etapa 1: još nemamo oscilator, pa je izlaz tišina.
     buffer.clear();
+
+    // Synthesiser čita note iz MIDI poruka i zbraja zvuk svih glasova u buffer.
+    synth.renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
 
     // Glasnoća se mijenja postupno kroz blok kako ne bi "pucketalo" kad se okrene gumb.
     const float targetGain = gainParameter->load();

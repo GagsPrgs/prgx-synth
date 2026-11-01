@@ -21,14 +21,21 @@ Audio nit mora završiti posao unutar nekoliko milisekundi, svaki put. Zato je u
 Također: parametre čitaj kroz `std::atomic<float>*` dobiven jednom u konstruktoru
 (`getRawParameterValue`), ne preko traženja po imenu u `processBlock`.
 
+**Poznata iznimka:** `juce::Synthesiser` interno drži `CriticalSection` dok renderira. To je u redu
+jer nitko drugi ne dira taj lock: glasove i zvukove dodajemo samo u konstruktoru, a
+`setCurrentPlaybackSampleRate` zovemo samo iz `prepareToPlay`. Zato nikad ne dodavaj,
+ne briši glasove niti mijenjaj brzinu uzorkovanja synthu iz `processBlock` ili s druge niti dok svira.
+Sav naš vlastiti kod (npr. `SynthVoice`) ostaje bez zaključavanja.
+
 ## Etape
 
 Radimo jednu etapu po redu. Ne prelazi na sljedeću dok vlasnik ne potvrdi da trenutna radi u FL Studiju.
 Git commit radi tek nakon te potvrde.
 
-1. **Prazan instrument** s jednim gumbom za glasnoću koji se učita u FL Studio. ← trenutna
-2. **Oscilator i MIDI**: sviranje nota (sinus/pila), polifonija preko `juce::Synthesiser`.
-3. **Ovojnica (ADSR)**: attack, decay, sustain, release.
+1. **Prazan instrument** s jednim gumbom za glasnoću koji se učita u FL Studio. (gotovo)
+2. **Oscilator i MIDI**: pilasti val (PolyBLEP, bez aliasinga), 8 glasova preko `juce::Synthesiser`,
+   note iz FL Studija. Ima kratku fiksnu ovojnicu (3 ms / 20 ms) samo protiv klikova. (gotovo)
+3. **Ovojnica (ADSR)**: attack, decay, sustain, release; ta fiksna ovojnica postaje podesiva gumbima. ← sljedeća
 4. **Filtar**: niskopropusni filtar s cutoff i resonance gumbima.
 5. **Modulacija**: LFO i odabir valnog oblika oscilatora.
 6. **Preseti i dorada sučelja**: spremanje/učitavanje preseta, ljepši izgled.
@@ -48,5 +55,7 @@ Detalji i kopiranje u FL Studio: `README.md`.
 ## Struktura
 
 - `CMakeLists.txt`: postavke projekta i plugina
-- `Source/PluginProcessor.*`: zvuk i parametri (audio nit)
+- `Source/PluginProcessor.*`: parametri, MIDI i zbrajanje glasova (audio nit)
+- `Source/SynthVoice.*`: jedan glas, oscilator i ovojnica (audio nit)
+- `Source/SynthSound.h`: oznaka "zvuka" koji synth svira
 - `Source/PluginEditor.*`: sučelje (glavna nit)

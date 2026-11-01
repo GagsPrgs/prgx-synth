@@ -36,7 +36,8 @@ target_compile_features(PrgxSynth PRIVATE cxx_std_20)
 target_sources(PrgxSynth
     PRIVATE
         Source/PluginProcessor.cpp
-        Source/PluginEditor.cpp)
+        Source/PluginEditor.cpp
+        Source/SynthVoice.cpp)
 
 target_compile_definitions(PrgxSynth
     PUBLIC
