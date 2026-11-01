@@ -51,7 +51,8 @@ C:\Program Files\Common Files\VST3
 FL Studio je skenira automatski. Za pisanje u nju trebaju administratorska prava, pa:
 
 1. Otvori Start, upiši **PowerShell**, desni klik → **Run as administrator**.
-2. Idi u mapu projekta i kopiraj plugin:
+2. Idi u mapu projekta i kopiraj plugin. Zamijeni `PUT_DO_MAPE_PROJEKTA` stvarnom putanjom
+   (u File Exploreru otvori mapu projekta, klikni u adresnu traku i kopiraj putanju):
 
 ```powershell
 cd "PUT_DO_MAPE_PROJEKTA"
@@ -116,4 +117,12 @@ Source/EnvelopeDisplay.*  crtež oblika ovojnice
 Source/Theme.h            boje sučelja
 CLAUDE.md                 pravila projekta i popis etapa
 .gitignore                što Git ne prati (mapa build/)
+LICENSE                   licenca (AGPL v3)
 ```
+
+## Licenca
+
+Projekt je objavljen pod licencom **GNU AGPL v3** (vidi datoteku `LICENSE`). Kod možeš slobodno
+koristiti, mijenjati i dijeliti, pod uvjetom da i tvoje izmijenjene verzije ostanu pod AGPL v3 i da je
+izvorni kod dostupan. Razlog je JUCE: on je za open-source projekte dostupan pod AGPL v3, pa naš plugin
+mora biti pod istom licencom. Za komercijalnu upotrebu bez takvih obveza JUCE ima posebnu plaćenu licencu.
